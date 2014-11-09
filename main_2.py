@@ -39,7 +39,22 @@ df[df['Age'] > 60][['Survived','Sex', 'Pclass', 'Age']]
 df[df['Age'].isnull()]
 
 # Print chart
+#************
+# Sort data to cabins alphabetical order.
+# This is assuming that the alphabet order of cabins represnt
+# the layout
+# Create data before Altering df
+data = df[df['Cabin'].isnull() == False]
+sorted_data = data[['Cabin', 'Survived']].sort('Cabin')
 
+final_data = sorted_data.copy()
+
+for index, row in sorted_data.iterrows():
+	final_data.loc[index, 'Index'] = index.astype(int)
+	final_data.loc[index, 'Survived'] = row['Survived']
+# final_data.plot(kind='scatter', x='Index', y='Survived')
+# P.show()
+# END
 
 # Creates a new column 'Gender', and maps the upper case character 'F' or 'M'
 df['Sex'] = df['Sex'].map( lambda x: x[0].upper() )
@@ -65,19 +80,20 @@ for i in range(0,2):
 
 
 
-df['AgeFill'] = df['Age']
+temp_df = df.copy()
+temp_df['AgeFill'] = df['Age']
 
 # Gets the first 10 values, from the filtered dataFrame.
-df[ df['Age'].isnull() ][['Gender','Pclass','Age','AgeFill']].head(10)
+df[ df['Age'].isnull() ][['Gender','Pclass','Age']].head(10)
 
 
 for i in range(0, 2):
     for j in range(0, 3):
-        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'AgeFill'] = median_ages[i,j]
+        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
 
 # Convert all floats to a range of 0.5 or 1.0
-# The reason being to fit the compo rules (Refer to data)
-df['AgeFill']= df['AgeFill'].map(lambda x: math.ceil(x * 2.0) * 0.5)
+# The reason being to fit the codempo rules (Refer to data)
+df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
 
 # This creates a new column ('AgeIsNull') 
 # 
@@ -91,13 +107,13 @@ df['FamilySize'] = df['SibSp'] + df['Parch']
 # This multiplies the Age of the person by the social 
 # class. It adds to the fact that higher ages are even
 # LESS likely to survive
-df['Age*Class'] = df.AgeFill * df.Pclass
+df['Age*Class'] = df.Age * df.Pclass
 
 # Since skipi doesnt work well with strings
 df.dtypes[df.dtypes.map(lambda x: x=='object')]
 
-# Create data before Altering df
-data = df[df['Cabin'].isnull() == False]
+
+
 
 # Setting up for machine learning yikes! Horrible!
 df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
@@ -106,26 +122,90 @@ df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
 # uh? wtf? Super bad.
 df = df.dropna()
 
-# Sort data to cabins alphabetical order.
-# This is assuming that the alphabet order of cabins represnt
-# the layout
-sorted_data = data[['Cabin', 'Survived']].sort('Cabin')
-
-final_data = sorted_data.copy()
 
 
-for index, row in sorted_data.iterrows():
-	final_data.loc[index, 'Index'] = index.astype(int)
-	final_data.loc[index, 'Survived'] = row['Survived']
-
-
-
-# Plots
-final_data.plot(kind='scatter', x='Index', y='Survived')
-P.show()
 
 
 train_data = df.values
 
-pdb.set_trace()
-print "Done"
+def clean_data_to_numbers(file):
+	df = pd.read_csv(file, header=0)
+
+	# Convert gender to number
+	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
+
+	# Maps all non null values of Embarked to numbers.
+	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
+	# Gets the median
+	Embarked_median = df['Embarked'].median()
+	# Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
+	# TODO: Create a model to predict 'Embarked'.
+	df['Embarked']=df['Embarked'].fillna(Embarked_median)
+
+	# Creates an array of 6 values. 2 Rows, 3 columns.
+	median_ages = np.zeros((2,3))
+
+	# For each Male/Female, we will have Three different median ages
+	# depending on what their Economic class ('Pclass') is.
+	for i in range(0,2):
+		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
+			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
+
+	#  stores the median age for rows with null 'Age'
+
+	for i in range(0, 2):
+	    for j in range(0, 3):
+	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
+
+	# Convert all floats to a range of 0.5 or 1.0
+	# The reason being to fit the compo rules (Refer to data)
+	df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
+
+	# *** DO MEAN FOR FARE ****
+	mean_fare = np.zeros((2,3))
+	for i in range(0,2):
+		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
+			mean_fare[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Fare.dropna().mean()
+
+
+	for i in range(0, 2):
+	    for j in range(0, 3):
+	        df.loc[(df.Fare.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Fare'] = mean_fare[i,j]
+	# This creates a new column ('AgeIsNull') 
+	# 
+	# pd: this is the pandas library
+	# pd.isnull(arg1): this is a function that converts the dataFrame rows
+	# 				   into a true/false table.
+	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+
+	df['FamilySize'] = df['SibSp'] + df['Parch']
+
+	# This multiplies the Age of the person by the social 
+	# class. It adds to the fact that higher ages are even
+	# LESS likely to survive
+	df['Age*Class'] = df.Age * df.Pclass
+
+	# Since skipi doesnt work well with strings
+	df.dtypes[df.dtypes.map(lambda x: x=='object')]
+
+
+	# Setting up for machine learning yikes! Horrible!
+	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
+	# Drops all columns that have any null value.. 
+	# uh? wtf? Super bad.
+	df = df.dropna()
+
+	# To store Id
+	passengerIds = df['PassengerId']
+
+	# Drop Id since output format issues
+	df = df.drop(['PassengerId'], axis = 1)
+
+	return df.values, passengerIds
+
+def get_array_id_from_file(file):
+	df = pd.read_csv(file, header=0)
+
+	return df['PassengerId']
+
+
