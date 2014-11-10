@@ -11,7 +11,7 @@ test_data, test_passenger_id = clean_data_to_numbers('data/test.csv')
 
 # Create the random forest object which will include all the parameters
 # for the fit
-forest = RandomForestClassifier(n_estimators = 10)
+forest = RandomForestClassifier(n_estimators = 10, max_features=None)
 
 # Fit the training data to the Survived labels and create the decision trees
 
