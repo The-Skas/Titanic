@@ -3,6 +3,7 @@ import numpy as np
 import pdb
 import math
 import pylab as P
+import csv as csv
 # P.show()
 # Some_data_frame.hist() //Shows graph
 
@@ -207,5 +208,15 @@ def get_array_id_from_file(file):
 	df = pd.read_csv(file, header=0)
 
 	return df['PassengerId']
+
+def write_model(fileName, output, passengersId):
+	prediction_file = open(fileName, "wb")
+	prediction_file_object = csv.writer(prediction_file)
+	prediction_file_object.writerow(["PassengerId", "Survived"])
+
+	for i,x in enumerate(passengersId):       # For each row in test.csv
+	        prediction_file_object.writerow([x, output[i]])    # predict 1
+
+	prediction_file.close()
 
 
