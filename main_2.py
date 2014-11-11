@@ -152,8 +152,10 @@ def clean_data_to_numbers(file):
 		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
 			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
 
-	#  stores the median age for rows with null 'Age'
+	# AgeIsNull
+	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
 
+	#  stores the median age for rows with null 'Age'
 	for i in range(0, 2):
 	    for j in range(0, 3):
 	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
@@ -177,7 +179,6 @@ def clean_data_to_numbers(file):
 	# pd: this is the pandas library
 	# pd.isnull(arg1): this is a function that converts the dataFrame rows
 	# 				   into a true/false table.
-	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
 
 	df['FamilySize'] = df['SibSp'] + df['Parch']
 
@@ -188,7 +189,6 @@ def clean_data_to_numbers(file):
 
 	# Since skipi doesnt work well with strings
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
-	pdb.set_trace()
 
 	# Setting up for machine learning yikes! Horrible!
 	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
@@ -201,6 +201,10 @@ def clean_data_to_numbers(file):
 
 	# Drop Id since output format issues
 	df = df.drop(['PassengerId'], axis = 1)
+	pdb.set_trace()
+
+	# Selecting top 3 columns
+	df = df.drop(['Pclass', 'SibSp', 'Parch', 'Embarked', 'AgeIsNull', 'FamilySize'],axis=1)
 
 	return df.values, passengerIds
 

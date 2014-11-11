@@ -12,12 +12,13 @@ test_data, test_passenger_id = clean_data_to_numbers('data/test.csv')
 
 # Create the random forest object which will include all the parameters
 # for the fit
-forest = RandomForestClassifier(n_estimators = 10)
+forest = RandomForestClassifier(n_estimators = 10000, max_features=3)
 
 # Fit the training data to the Survived labels and create the decision trees
 
 forest = forest.fit(train_data[0::,1::],train_data[0::,0])
 
+pdb.set_trace()
 # Take the same decision trees and run it on the test data
 result = forest.predict(test_data)
 
