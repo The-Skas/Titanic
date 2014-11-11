@@ -21,8 +21,12 @@ train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', remove_
 test_data, test_passenger_id = clean_data_to_numbers('data/test.csv', remove_columns)
 
 
-clf_l2_LR = GridSearchCV(LogisticRegression(C = 1, penalty = 'l2'),param_grid, cv = 5)
+clf = GridSearchCV(LogisticRegression(C = 1, penalty = 'l2'),param_grid, cv = 5)
 
-clf_l2_LR.fit(train_data[0::,1::],train_data[0::,0])
+clf.fit(train_data[0::,1::],train_data[0::,0])
+
+result = clf.predict(test_data)
+
+write_model("data/LogisticRegressionModelCV.csv", result, test_passenger_id)
 
 pdb.set_trace()
