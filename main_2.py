@@ -191,7 +191,7 @@ def clean_data_to_numbers(file):
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
 
 	# Setting up for machine learning yikes! Horrible!
-	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
+	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin','Embarked'], axis=1)
 	# Drops all columns that have any null value.. 
 	# uh? wtf? Super bad.
 	df = df.dropna()
@@ -201,10 +201,7 @@ def clean_data_to_numbers(file):
 
 	# Drop Id since output format issues
 	df = df.drop(['PassengerId'], axis = 1)
-	pdb.set_trace()
 
-	# Selecting top 3 columns
-	df = df.drop(['Pclass', 'SibSp', 'Parch', 'Embarked', 'AgeIsNull', 'FamilySize'],axis=1)
 
 	return df.values, passengerIds
 
