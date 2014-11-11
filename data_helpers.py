@@ -4,6 +4,7 @@ import pdb
 import math
 import pylab as P
 import csv as csv
+import warnings
 
 
 def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Name', 'Sex', 'Ticket', 'Cabin']):
@@ -114,7 +115,7 @@ def evaluate_accuracy_of_removed_columns(model,columns=[]):
 
 	# Fit the training data to the Survived labels and create the decision trees
 	model.fit(train_data[0::,1::],train_data[0::,0])
-
+	
 	return model.score(valid_data[0::,1::], valid_data[0::, 0])
 
 def feature_selection_model(model):
@@ -167,6 +168,7 @@ def feature_selection_model(model):
 		# Note: If best_column is empty, then dont add anything to final_removable_clumns
 		# 
 	# TO SORT  l.sort(key=lambda x: x[2])
+	
 	array_of_best_results.sort(key=lambda x: x[0])
 
 	return array_of_best_results
