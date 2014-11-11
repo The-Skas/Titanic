@@ -188,7 +188,7 @@ def clean_data_to_numbers(file):
 
 	# Since skipi doesnt work well with strings
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
-
+	pdb.set_trace()
 
 	# Setting up for machine learning yikes! Horrible!
 	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin'], axis=1)
@@ -213,9 +213,9 @@ def write_model(fileName, output, passengersId):
 	prediction_file = open(fileName, "wb")
 	prediction_file_object = csv.writer(prediction_file)
 	prediction_file_object.writerow(["PassengerId", "Survived"])
-
+	
 	for i,x in enumerate(passengersId):       # For each row in test.csv
-	        prediction_file_object.writerow([x, output[i]])    # predict 1
+	        prediction_file_object.writerow([x, output[i].astype(int)])    # predict 1
 
 	prediction_file.close()
 
