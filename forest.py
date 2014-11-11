@@ -1,11 +1,11 @@
-from main_2 import *
+from data_helpers import *
 
 # Import the random forest package
 from sklearn.ensemble import RandomForestClassifier 
 
 import csv as csv
 
-remove_columns = ['Parch', 'FamilySize', 'Age']
+remove_columns = ['Parch', 'FamilySize', 'Age', 'AgeIsNull', 'SibSp', 'Pclass']
 
 train_data, train_passenger_id = clean_data_to_numbers('data/train.csv',remove_columns)
 

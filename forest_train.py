@@ -1,4 +1,4 @@
-from main_2 import *
+from data_helpers import *
 
 # Import the random forest package
 from sklearn.ensemble import RandomForestClassifier 
@@ -12,7 +12,7 @@ def evaluate_accuracy_of_removed_columns(columns=[]):
 
 	train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', columns)
 
-	train_data,valid_data = np.array_split(train_data, 2)
+	valid_data, train_data = np.array_split(train_data, 2)
 
 	# Create the random forest object which will include all the parameters
 	# for the fit
@@ -78,9 +78,9 @@ def feature_selection_decision_tree():
 	return array_of_best_results
 
 
-# evaluation_accuracy_of_removed_columns(['Parch', 'FamilySize', 'Age', 'AgeIsNull', 'SibSp'])
+print evaluate_accuracy_of_removed_columns(['Parch', 'FamilySize', 'Age', 'AgeIsNull', 'SibSp', 'Pclass'])
 
-feature_selection_decision_tree()
+# feature_selection_decision_tree()
 
 # Do score here.
 print "Done!"
