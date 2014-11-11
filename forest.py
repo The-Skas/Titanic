@@ -5,7 +5,7 @@ from sklearn.ensemble import RandomForestClassifier
 
 import csv as csv
 
-remove_columns = ['Parch', 'FamilySize', 'Age', 'AgeIsNull', 'SibSp']
+remove_columns = ['Parch', 'FamilySize', 'Age']
 
 train_data, train_passenger_id = clean_data_to_numbers('data/train.csv',remove_columns)
 
@@ -15,7 +15,7 @@ test_data, test_passenger_id = clean_data_to_numbers('data/test.csv', remove_col
 
 # Create the random forest object which will include all the parameters
 # for the fit
-forest = RandomForestClassifier(n_estimators = 10000, max_features='sqrt')
+forest = RandomForestClassifier(n_estimators = 10000, max_features='sqrt',min_samples_split=1)
 
 # Fit the training data to the Survived labels and create the decision trees
 forest = forest.fit(train_data[0::,1::],train_data[0::,0])
