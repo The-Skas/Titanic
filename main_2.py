@@ -129,9 +129,8 @@ df = df.dropna()
 
 train_data = df.values
 
-def clean_data_to_numbers(file):
+def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Name', 'Sex', 'Ticket', 'Cabin']):
 	df = pd.read_csv(file, header=0)
-
 	# Convert gender to number
 	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
@@ -189,12 +188,13 @@ def clean_data_to_numbers(file):
 
 	# Since skipi doesnt work well with strings
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
-
 	# Setting up for machine learning yikes! Horrible!
-	df = df.drop(['Name', 'Sex', 'Ticket', 'Cabin','Embarked'], axis=1)
+	# The values you drop can improve or make worse.
+	df = df.drop(drop_columns_default + additional_columns, axis=1)
 	# Drops all columns that have any null value.. 
 	# uh? wtf? Super bad.
 	df = df.dropna()
+
 
 	# To store Id
 	passengerIds = df['PassengerId']
