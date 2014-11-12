@@ -6,13 +6,13 @@ import pylab as P
 import csv as csv
 from sklearn import preprocessing	
 from sklearn.cross_validation import train_test_split
+from sklearn.feature_extraction import DictVectorizer
 
-
-def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Name', 'Sex', 'Ticket', 'Cabin']):
+def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
 	df = pd.read_csv(file, header=0)
 	# Convert gender to number
 	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
-	pdb.set_trace()
+
 	# Maps all non null values of Embarked to numbers.
 	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
 	# Gets the median
@@ -20,6 +20,20 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	# Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
 	# TODO: Create a model to predict 'Embarked'.
 	df['Embarked']=df['Embarked'].fillna(Embarked_median)
+
+	# Clean Cabin
+	df.Cabin = df.Cabin.fillna('Unknown')
+	le = preprocessing.LabelEncoder()
+	le.fit(df.Cabin)
+	df.Cabin = le.transform(df.Cabin)
+
+
+	# Clean Ticket
+	df.Ticket = df.Ticket.fillna('Unknown')
+	le = preprocessing.LabelEncoder()
+	le.fit(df.Ticket)
+	df.Ticket = le.transform(df.Ticket)
+
 
 	# Creates an array of 6 values. 2 Rows, 3 columns.
 	median_ages = np.zeros((2,3))
@@ -138,7 +152,7 @@ def feature_selection_model(model, normalizeData=False):
 
 	amount_redundant_loop = 0
 	for i, x in enumerate(list_of_columns):
-		print(i),
+		print(i)
 		print(x),
 		best_column_i = -1
 		for j, y in enumerate(mutable_list):
@@ -161,7 +175,8 @@ def feature_selection_model(model, normalizeData=False):
 				col_acc_list.append(temp_removeable_columns)
 
 				array_of_best_results.append(col_acc_list)
-		
+			
+			print(j),
 		# Add the column that provided the most accuracy when removed.
 		if(best_column_i != -1):
 			final_removeable_columns.append(mutable_list[best_column_i])

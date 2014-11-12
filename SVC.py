@@ -10,7 +10,7 @@ tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000]},
                     {'kernel': ['poly'],'degree':[2,3,4,5,6],'C': [1, 10, 100, 1000]},
                     {'kernel': ['rbf'], 'gamma': [1e-2,1e-1, 1, 1e1], 'C': [1, 10, 100, 1000]}]
 
-remove_columns = ['Fare', 'Embarked']
+remove_columns =['Fare', 'Ticket', 'Cabin', 'Embarked','SibSp', 'Parch','AgeIsNull']
 
 train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', remove_columns)
 
@@ -19,7 +19,7 @@ train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', remove_
 test_data, test_passenger_id = clean_data_to_numbers('data/test.csv', remove_columns)
 
 # If normalizeData is true then Normalize
-
+pdb.set_trace()
 X_train= preprocessing.normalize(train_data[0::,1::])
 X_test = preprocessing.normalize(test_data)
 

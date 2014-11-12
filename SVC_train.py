@@ -7,13 +7,14 @@ from sklearn.metrics import metrics as metrics
 from sklearn.svm import SVC
 from sklearn.metrics import classification_report
 from sklearn import preprocessing	
+
 # Set the parameters by cross-validation
 # 
-columns = []
+columns = ['Fare', 'Ticket', 'Cabin', 'Embarked','SibSp', 'Parch','AgeIsNull']
 
-tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000]},
-                    {'kernel': ['poly'],'degree':[2,3,4,5,6],'C': [1, 10, 100, 1000]},
-                    {'kernel': ['rbf'], 'gamma': [1e-2,1e-1, 1, 1e1], 'C': [1, 10, 100, 1000]}]
+tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000],'class_weight':['auto'] },
+                    {'kernel': ['poly'],'degree':[2,3,4,5,6],'C': [1, 10, 100, 1000], 'class_weight':['auto']},
+                    {'kernel': ['rbf'], 'gamma': [1e-2,1e-1, 1, 1e1], 'C': [1, 10, 100, 1000], 'class_weight':['auto']}]
 
 
 print "*********************************"
@@ -30,16 +31,14 @@ X_test = preprocessing.normalize(X_test)
 
 
 
-clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=10, scoring='accuracy', n_jobs = 4, verbose=0)
+clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5, scoring='accuracy', n_jobs = 4, verbose=0)
 
-print feature_selection_model(clf, True)
+# print feature_selection_model(clf, True)
 
-
-clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=10, scoring='accuracy', n_jobs = 4, verbose=0)
+# clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=10, scoring='accuracy', n_jobs = 4, verbose=0)
 
 clf.fit(X_train, Y_train)
 
-pdb.set_trace()
 
 Y_true, Y_pred = Y_test, clf.predict(X_test)
 
@@ -47,7 +46,4 @@ Y_true, Y_pred = Y_test, clf.predict(X_test)
 pdb.set_trace()
 
 print(classification_report(Y_true, Y_pred))
-
-(Pdb) df_ok = df.dropna()
-(Pdb) df_bad = df.drop(df_ok.index)
 
