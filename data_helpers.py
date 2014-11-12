@@ -11,29 +11,29 @@ from sklearn.feature_extraction import DictVectorizer
 def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
 	df = pd.read_csv(file, header=0)
 	# Convert gender to number
-	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
+	# df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
-	# Maps all non null values of Embarked to numbers.
-	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
-	# Gets the median
-	Embarked_median = df['Embarked'].median()
-	# Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
-	# TODO: Create a model to predict 'Embarked'.
-	df['Embarked']=df['Embarked'].fillna(Embarked_median)
+	# # Maps all non null values of Embarked to numbers.
+	# df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
+	# # Gets the median
+	# Embarked_median = df['Embarked'].median()
+	# # Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
+	# # TODO: Create a model to predict 'Embarked'.
+	# df['Embarked']=df['Embarked'].fillna(Embarked_median)
 
-	# Clean Cabin
-	df.Cabin = df.Cabin.fillna('Unknown')
-	le = preprocessing.LabelEncoder()
-	le.fit(df.Cabin)
-	df.Cabin = le.transform(df.Cabin)
+	# # Clean Cabin
+	# df.Cabin = df.Cabin.fillna('Unknown')
+	# le = preprocessing.LabelEncoder()
+	# le.fit(df.Cabin)
+	# df.Cabin = le.transform(df.Cabin)
 
-
-	# Clean Ticket
-	df.Ticket = df.Ticket.fillna('Unknown')
-	le = preprocessing.LabelEncoder()
-	le.fit(df.Ticket)
-	df.Ticket = le.transform(df.Ticket)
-
+	# pdb.set_trace()
+	# # Clean Ticket
+	# df.Ticket = df.Ticket.fillna('Unknown')
+	# le = preprocessing.LabelEncoder()
+	# le.fit(df.Ticket)
+	# df.Ticket = le.transform(df.Ticket)
+	clean_up_some_values(df)
 
 	# Creates an array of 6 values. 2 Rows, 3 columns.
 	median_ages = np.zeros((2,3))
@@ -43,7 +43,7 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	for i in range(0,2):
 		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
 			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
-
+	pdb.set_trace()
 	# AgeIsNull
 	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
 
@@ -97,12 +97,91 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 
 
 	return df.values, passengerIds
+def clean_up_some_values(df):
+	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
+
+	# Maps all non null values of Embarked to numbers.
+	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
+	# Gets the median
+	Embarked_median = df['Embarked'].median()
+	# Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
+	# TODO: Create a model to predict 'Embarked'.
+	df['Embarked']=df['Embarked'].fillna(Embarked_median)
+
+	# Clean Cabin
+	df.Cabin = df.Cabin.fillna('Unknown')
+	le = preprocessing.LabelEncoder()
+	le.fit(df.Cabin)
+	df.Cabin = le.transform(df.Cabin)
+
+	pdb.set_trace()
+	# Clean Ticket
+	df.Ticket = df.Ticket.fillna('Unknown')
+	le = preprocessing.LabelEncoder()
+	le.fit(df.Ticket)
+	df.Ticket = le.transform(df.Ticket)
+
+	df.Fare=df.Fare.fillna(np.mean(df.Fare))
+
+"""Creates the model to predict specific column in the data."""	
+def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived','Name','Sex'],dropColumnsTest=['Name','Sex']):
+	df_train = pd.read_csv(fileTrain, header=0)
+
+	df_test  = pd.read_csv(fileTest, header=0)
+
+	clean_up_some_values(df_train)
+
+	clean_up_some_values(df_test)
+
+	df_train = df_train.drop(dropColumnsTrain,axis=1)
+	df_test=df_test.drop(dropColumnsTest ,axis = 1)
+	
+	# Get data for a specific column
+	df_train_good=df_train[df_train[Predictcolumn].isnull() == False]
+	# Drop all Non null indices to get all null
+	df_train_null=df_train.drop(df_train_good.index)
+	
+	df_test_good=df_test[df_test[Predictcolumn].isnull() == False]
+
+	df_test_null=df_test.drop(df_test_good.index)
+
+	# Joins up all Good data from train and test
+	df_train = pd.concat([df_train_good, df_test_good])
+	# Joins up all Null data to predict
+	df_test = pd.concat([df_train_null,  df_test_null])
+	# We drop 'Age' or whatever column since we have no more use.
+	df_test=df_test.drop(Predictcolumn ,axis = 1)
+
+	pdb.set_trace()
+
+	
+ 
+	train_data = df_train.values
+	test_data = df_test.values
+
+	# the column that we will predict
+	indexColumn = np.where(df_train.columns.values == Predictcolumn)[0][0]
+	# Column to predict
+	train_withColRemoved = np.delete(train_data,np.s_[indexColumn], 1)
+	# Split
+	X_train, X_test, Y_train, Y_test = train_test_split(train_withColRemoved,train_data[0::,indexColumn], test_size=0.5, random_state=0)
+
+	pdb.set_trace()
+
+
+	print "stop"
+
 
 def get_array_id_from_file(file):
 	df = pd.read_csv(file, header=0)
 
 	return df['PassengerId']
 
+"""
+	Outputs To file
+	fileName: The name of the file to output.
+	output: An array of results which are 1 or 0.
+"""
 def write_model(fileName, output, passengersId):
 	prediction_file = open(fileName, "wb")
 	prediction_file_object = csv.writer(prediction_file)
@@ -112,7 +191,6 @@ def write_model(fileName, output, passengersId):
 	        prediction_file_object.writerow([x, output[i].astype(int)])    # predict 1
 
 	prediction_file.close()
-
 
 def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False):
 	train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', columns)

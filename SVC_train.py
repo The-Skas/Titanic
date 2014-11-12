@@ -13,8 +13,7 @@ from sklearn import preprocessing
 columns = ['Fare', 'Ticket', 'Cabin', 'Embarked','SibSp', 'Parch','AgeIsNull']
 
 tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000],'class_weight':['auto'] },
-                    {'kernel': ['poly'],'degree':[2,3,4,5,6],'C': [1, 10, 100, 1000], 'class_weight':['auto']},
-                    {'kernel': ['rbf'], 'gamma': [1e-2,1e-1, 1, 1e1], 'C': [1, 10, 100, 1000], 'class_weight':['auto']}]
+                    {'kernel': ['rbf'], 'gamma': [1e-3,1e-2,1e-1, 1], 'C': [1, 10, 100, 1000], 'class_weight':['auto']}]
 
 
 print "*********************************"
