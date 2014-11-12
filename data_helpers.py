@@ -4,14 +4,15 @@ import pdb
 import math
 import pylab as P
 import csv as csv
-import warnings
+from sklearn import preprocessing	
+from sklearn.cross_validation import train_test_split
 
 
 def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Name', 'Sex', 'Ticket', 'Cabin']):
 	df = pd.read_csv(file, header=0)
 	# Convert gender to number
 	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
-
+	pdb.set_trace()
 	# Maps all non null values of Embarked to numbers.
 	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
 	# Gets the median
@@ -39,7 +40,7 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 
 	# Convert all floats to a range of 0.5 or 1.0
 	# The reason being to fit the compo rules (Refer to data)
-	df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
+	# df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
 
 	# *** DO MEAN FOR FARE ****
 	mean_fare = np.zeros((2,3))
@@ -50,7 +51,7 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 
 	for i in range(0, 2):
 	    for j in range(0, 3):
-	        df.loc[(df.Fare.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Fare'] = mean_fare[i,j]
+	        df.loc[(df.Fare == 0) & (df.Gender == i) & (df.Pclass == j+1),'Fare'] = mean_fare[i,j]
 	# This creates a new column ('AgeIsNull') 
 	# 
 	# pd: this is the pandas library
@@ -99,7 +100,7 @@ def write_model(fileName, output, passengersId):
 	prediction_file.close()
 
 
-def evaluate_accuracy_of_removed_columns(model,columns=[]):
+def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False):
 	train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', columns)
 	"""
 	This function returns the accuracy of the model given the columns to be removed 
@@ -108,24 +109,29 @@ def evaluate_accuracy_of_removed_columns(model,columns=[]):
 
 	train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', columns)
 
-	valid_data, train_data = np.array_split(train_data, 2)
+	X_train, X_test, Y_train, Y_test =train_test_split(train_data[0::,1::],train_data[0::,0], test_size=0.5, random_state=0)
+
+	# If normalizeData is true then Normalize
+	if(normalizeData == True):
+		X_train= preprocessing.normalize(X_train)
+		X_test = preprocessing.normalize(X_test)
 
 	# Create the random forest object which will include all the parameters
 	# for the fit
 
 	# Fit the training data to the Survived labels and create the decision trees
-	model.fit(train_data[0::,1::],train_data[0::,0])
+	model.fit(X_train,Y_train)
 	
-	return model.score(valid_data[0::,1::], valid_data[0::, 0])
+	return model.score(X_test, Y_test)
 
-def feature_selection_model(model):
+def feature_selection_model(model, normalizeData=False):
 	list_of_columns =  ['Pclass', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked', 'Gender', 'AgeIsNull', 'FamilySize', 'Age*Class']
 
 	mutable_list = list(list_of_columns)
 
 	final_removeable_columns = list()
 	# Backward Feature Selection
-	best_accuracy = evaluate_accuracy_of_removed_columns(model)
+	best_accuracy = evaluate_accuracy_of_removed_columns(model,[],normalizeData)
 
 
 	array_of_best_results = list()
@@ -143,8 +149,7 @@ def feature_selection_model(model):
 			# After each x+1, mutable list will have a column removed from it.
 			
 			temp_removeable_columns.append(mutable_list[j])
-
-			temp_accuracy = evaluate_accuracy_of_removed_columns(model,temp_removeable_columns)
+			temp_accuracy = evaluate_accuracy_of_removed_columns(model,temp_removeable_columns,normalizeData)
 
 			# if The accuracy improved after removing the given columns
 			if(temp_accuracy > best_accuracy):

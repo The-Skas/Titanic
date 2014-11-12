@@ -7,7 +7,7 @@ from sklearn.metrics import metrics as metrics
 import csv as csv
 
 remove_columns = ['Age', 'Fare', 'AgeIsNull', 'Parch', 'SibSp']
-
+pdb.set_trace()
 train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', remove_columns)
 
 # for i,x in enumerate(list_of_columns)
@@ -23,7 +23,7 @@ lR.fit(train_data[0::,1::],train_data[0::,0])
 
 result = lR.predict(test_data)
 
-write_model("data/LogisticRegressionModel.csv", result, test_passenger_id)
+# write_model("data/LogisticRegressionModel.csv", result, test_passenger_id)
 
 # Do score here.
 print "Done!"
