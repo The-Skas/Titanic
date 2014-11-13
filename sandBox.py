@@ -14,7 +14,8 @@ from sklearn import linear_model
 remove_columns = ['Survived']
 
 
-clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+# clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0, 100.0])
+clf = linear_model.LinearRegression()
 
 # df_Age_ok   =df[df.Age.isnull() == False]
 # df_Age_null = df.drop(df_Age_ok.index)

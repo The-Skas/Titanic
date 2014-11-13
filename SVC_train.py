@@ -10,7 +10,7 @@ from sklearn import preprocessing
 
 # Set the parameters by cross-validation
 # 
-columns = ['Fare', 'Ticket', 'Cabin', 'Embarked','SibSp', 'Parch','AgeIsNull']
+columns = ['Age*Class', 'Fare', 'Parch']
 
 tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000],'class_weight':['auto'] },
                     {'kernel': ['rbf'], 'gamma': [1e-3,1e-2,1e-1, 1], 'C': [1, 10, 100, 1000], 'class_weight':['auto']}]

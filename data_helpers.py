@@ -6,8 +6,8 @@ import pylab as P
 import csv as csv
 from sklearn import preprocessing	
 from sklearn.cross_validation import train_test_split
-from sklearn.feature_extraction import DictVectorizer
-
+from sklearn.metrics import metrics as met
+from sklearn import linear_model
 def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
 	df = pd.read_csv(file, header=0)
 	# Convert gender to number
@@ -34,7 +34,11 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	# le.fit(df.Ticket)
 	# df.Ticket = le.transform(df.Ticket)
 	clean_up_some_values(df)
-
+	X = get_X_data(df,'Age')
+	model = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0, 100.0])
+	model = fit_model_prediction_for_column(model)
+	y = model.predict(X)
+	df.Age[df.Age.isnull() == True] = y
 	# Creates an array of 6 values. 2 Rows, 3 columns.
 	median_ages = np.zeros((2,3))
 
@@ -43,15 +47,19 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	for i in range(0,2):
 		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
 			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
-	pdb.set_trace()
 	# AgeIsNull
 	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+	
+
+	
 
 	#  stores the median age for rows with null 'Age'
-	for i in range(0, 2):
-	    for j in range(0, 3):
-	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
+	# for i in range(0, 2):
+	#     for j in range(0, 3):
+	#         df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
+	df_null_Age = df[df['Age'].isnull() == True]
 
+	
 	# Convert all floats to a range of 0.5 or 1.0
 	# The reason being to fit the compo rules (Refer to data)
 	# df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
@@ -114,7 +122,6 @@ def clean_up_some_values(df):
 	le.fit(df.Cabin)
 	df.Cabin = le.transform(df.Cabin)
 
-	pdb.set_trace()
 	# Clean Ticket
 	df.Ticket = df.Ticket.fillna('Unknown')
 	le = preprocessing.LabelEncoder()
@@ -122,6 +129,24 @@ def clean_up_some_values(df):
 	df.Ticket = le.transform(df.Ticket)
 
 	df.Fare=df.Fare.fillna(np.mean(df.Fare))
+
+
+def get_X_data(df, predictColumn, dropColumns=['Name','Sex'] ):
+	# Copy df to not alter anything.
+	df_t = df.copy()
+
+	df_t = df_t[df_t[predictColumn].isnull() == True]
+
+	if('Survived' in df_t):
+		df_t=df_t.drop('Survived', axis=1)
+
+	df_t=df_t.drop(dropColumns + [predictColumn], axis=1)
+
+	data=df_t.values
+	
+
+	return data
+
 
 """Creates the model to predict specific column in the data."""	
 def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived','Name','Sex'],dropColumnsTest=['Name','Sex']):
@@ -152,7 +177,6 @@ def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest=
 	# We drop 'Age' or whatever column since we have no more use.
 	df_test=df_test.drop(Predictcolumn ,axis = 1)
 
-	pdb.set_trace()
 
 	
  
@@ -166,10 +190,16 @@ def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest=
 	# Split
 	X_train, X_test, Y_train, Y_test = train_test_split(train_withColRemoved,train_data[0::,indexColumn], test_size=0.5, random_state=0)
 
-	pdb.set_trace()
 
+	model.fit(X_train, Y_train)
 
+ 	Y_true, Y_pred = Y_test,model.predict(X_test)
+
+ 	print met.explained_variance_score(Y_true, Y_pred)
+ 	print met.mean_absolute_error(Y_true, Y_pred)
 	print "stop"
+
+	return model
 
 
 def get_array_id_from_file(file):
