@@ -8,7 +8,15 @@ from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import metrics as met
 from sklearn import linear_model
-def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+from sklearn.feature_selection import RFECV
+
+
+DROP_COL = ['Name','Sex', 'PassengerId','Ticket' ,'Cabin', 'Staff']
+def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
 	df = pd.read_csv(file, header=0)
 	# Convert gender to number
 	# df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
@@ -34,11 +42,27 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	# le.fit(df.Ticket)
 	# df.Ticket = le.transform(df.Ticket)
 	clean_up_some_values(df)
-	X = get_X_data(df,'Age')
-	model = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0, 100.0])
-	model = fit_model_prediction_for_column(model)
-	y = model.predict(X)
-	df.Age[df.Age.isnull() == True] = y
+	# X = get_X_data(df,'Age')
+
+	# svc = LinearSVC(C=100)
+
+
+	# rfecv = RFECV(estimator=svc, step=1, cv=5)
+
+	# gscv = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
+	# model = Pipeline([
+	#   ('feature_selection', LinearSVC(penalty="l2")),
+	#   ('regression', gscv)
+	# ])
+	
+
+
+	# model = fit_model_prediction_for_column(model)
+	# y = model.predict(X)
+
+	# df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+
+	# df.Age[df.Age.isnull() == True] = y
 	# Creates an array of 6 values. 2 Rows, 3 columns.
 	median_ages = np.zeros((2,3))
 
@@ -48,18 +72,18 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
 			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
 	# AgeIsNull
-	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+	
 	
 
 	
 
-	#  stores the median age for rows with null 'Age'
-	# for i in range(0, 2):
-	#     for j in range(0, 3):
-	#         df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
+	 # stores the median age for rows with null 'Age'
+	for i in range(0, 2):
+	    for j in range(0, 3):
+	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
 	df_null_Age = df[df['Age'].isnull() == True]
 
-	
+	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
 	# Convert all floats to a range of 0.5 or 1.0
 	# The reason being to fit the compo rules (Refer to data)
 	# df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
@@ -85,7 +109,7 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	# This multiplies the Age of the person by the social 
 	# class. It adds to the fact that higher ages are even
 	# LESS likely to survive
-	df['Age*Class'] = df.Age * df.Pclass
+	
 
 	# Since skipi doesnt work well with strings
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
@@ -103,8 +127,9 @@ def clean_data_to_numbers(file,additional_columns = [], drop_columns_default = [
 	# Drop Id since output format issues
 	df = df.drop(['PassengerId'], axis = 1)
 
+	values = df.values
 
-	return df.values, passengerIds
+	return values, passengerIds
 def clean_up_some_values(df):
 	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
@@ -130,8 +155,16 @@ def clean_up_some_values(df):
 
 	df.Fare=df.Fare.fillna(np.mean(df.Fare))
 
+	# Assumes anyone with Fare 0 to be staff. Staff are more likely to die.
+	df['Staff'] = 0
+	df.loc[df.Fare == 0 , 'Staff'] = 1
 
-def get_X_data(df, predictColumn, dropColumns=['Name','Sex'] ):
+	df['Prefix'] =  df['Name'].map( lambda x: x.split(",")[1].split(" ")[1])
+	le = preprocessing.LabelEncoder()
+	le.fit(df.Prefix)
+	df.Prefix = le.transform(df.Prefix)
+
+def get_X_data(df, predictColumn, dropColumns=DROP_COL ):
 	# Copy df to not alter anything.
 	df_t = df.copy()
 
@@ -149,7 +182,7 @@ def get_X_data(df, predictColumn, dropColumns=['Name','Sex'] ):
 
 
 """Creates the model to predict specific column in the data."""	
-def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived','Name','Sex'],dropColumnsTest=['Name','Sex']):
+def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived'] + DROP_COL,dropColumnsTest=DROP_COL):
 	df_train = pd.read_csv(fileTrain, header=0)
 
 	df_test  = pd.read_csv(fileTest, header=0)
@@ -177,7 +210,6 @@ def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest=
 	# We drop 'Age' or whatever column since we have no more use.
 	df_test=df_test.drop(Predictcolumn ,axis = 1)
 
-
 	
  
 	train_data = df_train.values
@@ -188,8 +220,7 @@ def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest=
 	# Column to predict
 	train_withColRemoved = np.delete(train_data,np.s_[indexColumn], 1)
 	# Split
-	X_train, X_test, Y_train, Y_test = train_test_split(train_withColRemoved,train_data[0::,indexColumn], test_size=0.5, random_state=0)
-
+	X_train, X_test, Y_train, Y_test = train_test_split(train_withColRemoved,train_data[0::,indexColumn], test_size=0.33, random_state=0)
 
 	model.fit(X_train, Y_train)
 
@@ -247,7 +278,7 @@ def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False
 	return model.score(X_test, Y_test)
 
 def feature_selection_model(model, normalizeData=False):
-	list_of_columns =  ['Pclass', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked', 'Gender', 'AgeIsNull', 'FamilySize', 'Age*Class']
+	list_of_columns =  ['Pclass', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked', 'Gender', 'AgeIsNull', 'FamilySize', 'Staff', 'Prefix']
 
 	mutable_list = list(list_of_columns)
 

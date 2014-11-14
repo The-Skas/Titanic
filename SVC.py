@@ -5,12 +5,12 @@ from sklearn.grid_search  import GridSearchCV
 from sklearn.svm import SVC
 from sklearn import preprocessing	
 from sklearn.cross_validation import train_test_split
-
+from sklearn.ensemble import RandomForestClassifier
 tuned_parameters = [{'kernel': ['linear'], 'C':[1,10,100,1000]},
                     {'kernel': ['poly'],'degree':[2,3,4,5,6],'C': [1, 10, 100, 1000]},
                     {'kernel': ['rbf'], 'gamma': [1e-2,1e-1, 1, 1e1], 'C': [1, 10, 100, 1000]}]
 
-remove_columns =['Age*Class', 'Fare', 'Parch']
+remove_columns =[ 'Fare', 'Parch']
 
 train_data, train_passenger_id = clean_data_to_numbers('data/train.csv', remove_columns)
 
