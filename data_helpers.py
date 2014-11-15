@@ -110,7 +110,6 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# class. It adds to the fact that higher ages are even
 	# LESS likely to survive
 	
-
 	# Since skipi doesnt work well with strings
 	df.dtypes[df.dtypes.map(lambda x: x=='object')]
 	# Setting up for machine learning yikes! Horrible!
@@ -158,6 +157,9 @@ def clean_up_some_values(df):
 	# Assumes anyone with Fare 0 to be staff. Staff are more likely to die.
 	df['Staff'] = 0
 	df.loc[df.Fare == 0 , 'Staff'] = 1
+
+	df.loc[df.Fare == 0, 'Fare'] = df.Fare.median()
+
 
 	df['Prefix'] =  df['Name'].map( lambda x: x.split(",")[1].split(" ")[1])
 	le = preprocessing.LabelEncoder()
