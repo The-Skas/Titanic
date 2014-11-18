@@ -42,7 +42,7 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# le.fit(df.Ticket)
 	# df.Ticket = le.transform(df.Ticket)
 	clean_up_some_values(df)
-	# X = get_X_data(df,'Age')
+	X = get_X_data(df,'Age')
 
 	# svc = LinearSVC(C=100)
 
