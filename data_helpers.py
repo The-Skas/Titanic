@@ -13,56 +13,31 @@ from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import RFECV
+from sklearn.ensemble import RandomForestRegressor
 
-
-DROP_COL = ['Name','Sex', 'PassengerId','Ticket' ,'Cabin', 'Staff']
+# Globals
+DROP_COL = ['Name','Sex', 'PassengerId','Ticket' ,'Cabin']
+le_Cabin = 0;
+le_Ticket = 0;
 def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
 	df = pd.read_csv(file, header=0)
-	# Convert gender to number
-	# df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
-	# # Maps all non null values of Embarked to numbers.
-	# df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
-	# # Gets the median
-	# Embarked_median = df['Embarked'].median()
-	# # Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
-	# # TODO: Create a model to predict 'Embarked'.
-	# df['Embarked']=df['Embarked'].fillna(Embarked_median)
-
-	# # Clean Cabin
-	# df.Cabin = df.Cabin.fillna('Unknown')
-	# le = preprocessing.LabelEncoder()
-	# le.fit(df.Cabin)
-	# df.Cabin = le.transform(df.Cabin)
-
-	# pdb.set_trace()
-	# # Clean Ticket
-	# df.Ticket = df.Ticket.fillna('Unknown')
-	# le = preprocessing.LabelEncoder()
-	# le.fit(df.Ticket)
-	# df.Ticket = le.transform(df.Ticket)
 	clean_up_some_values(df)
 	X = get_X_data(df,'Age')
 
-	# svc = LinearSVC(C=100)
-
-
-	# rfecv = RFECV(estimator=svc, step=1, cv=5)
-
-	# gscv = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
-	# model = Pipeline([
-	#   ('feature_selection', LinearSVC(penalty="l2")),
-	#   ('regression', gscv)
-	# ])
+	gscv = RandomForestRegressor(n_estimators = 1000)
+	model = Pipeline([
+	  ('regression', gscv)
+	])
 	
 
 
-	# model = fit_model_prediction_for_column(model)
-	# y = model.predict(X)
+	model = fit_model_prediction_for_column(model)
+	y = model.predict(X)
 
-	# df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
 
-	# df.Age[df.Age.isnull() == True] = y
+	df.Age[df.Age.isnull() == True] = y
 	# Creates an array of 6 values. 2 Rows, 3 columns.
 	median_ages = np.zeros((2,3))
 
@@ -83,7 +58,7 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
 	df_null_Age = df[df['Age'].isnull() == True]
 
-	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
+	
 	# Convert all floats to a range of 0.5 or 1.0
 	# The reason being to fit the compo rules (Refer to data)
 	# df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
@@ -104,7 +79,7 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# pd.isnull(arg1): this is a function that converts the dataFrame rows
 	# 				   into a true/false table.
 
-	df['FamilySize'] = df['SibSp'] + df['Parch']
+	df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
 
 	# This multiplies the Age of the person by the social 
 	# class. It adds to the fact that higher ages are even
@@ -126,7 +101,7 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# Drop Id since output format issues
 	df = df.drop(['PassengerId'], axis = 1)
 
-	values = df.values
+	values = df
 
 	return values, passengerIds
 def clean_up_some_values(df):
@@ -141,16 +116,18 @@ def clean_up_some_values(df):
 	df['Embarked']=df['Embarked'].fillna(Embarked_median)
 
 	# Clean Cabin
+	global le_Cabin
 	df.Cabin = df.Cabin.fillna('Unknown')
-	le = preprocessing.LabelEncoder()
-	le.fit(df.Cabin)
-	df.Cabin = le.transform(df.Cabin)
+	le_Cabin = preprocessing.LabelEncoder()
+	le_Cabin.fit(df.Cabin)
+	df.Cabin = le_Cabin.transform(df.Cabin)
 
 	# Clean Ticket
+	global le_Ticket
 	df.Ticket = df.Ticket.fillna('Unknown')
-	le = preprocessing.LabelEncoder()
-	le.fit(df.Ticket)
-	df.Ticket = le.transform(df.Ticket)
+	le_Ticket = preprocessing.LabelEncoder()
+	le_Ticket.fit(df.Ticket)
+	df.Ticket = le_Ticket.transform(df.Ticket)
 
 	df.Fare=df.Fare.fillna(np.mean(df.Fare))
 
@@ -160,12 +137,26 @@ def clean_up_some_values(df):
 
 	df.loc[df.Fare == 0, 'Fare'] = df.Fare.median()
 
-
+	# pdb.set_trace()
 	df['Prefix'] =  df['Name'].map( lambda x: x.split(",")[1].split(" ")[1])
+
+	# Simplify High Survival Ladies since They All Survive.
+	df.loc[df.Prefix.isin(['Mlle.', 'Mme.', 'Lady.', 'Ms.', 'the']), 'Prefix'] = 'HighWoman'
+
+	df.loc[df.Prefix.isin(['Master.','Sir.']), 'Prefix'] = 'HighMen'
+
+	df.loc[df.Prefix.isin(['Capt.', 'Col.' ,'Don.', 'Dr.' ,'Jonkheer.', 'Major.' ]), 'Prefix'] = 'WorkForce'
 	le = preprocessing.LabelEncoder()
 	le.fit(df.Prefix)
 	df.Prefix = le.transform(df.Prefix)
 
+	# Create new Column Prefix-Pclass-Gender
+	print("Do Prefix-Pclass-Gender")
+	# Must initialize new row as follows
+	df['PclassGenderPref'] = 0	
+	df.PclassGenderPref = df.Gender.map(str)+ df.Pclass.map(str) +df.Prefix.map(str)
+	df.PclassGenderPref = df.PclassGenderPref.map(int)
+	print("Check.")
 def get_X_data(df, predictColumn, dropColumns=DROP_COL ):
 	# Copy df to not alter anything.
 	df_t = df.copy()
@@ -333,3 +324,32 @@ def feature_selection_model(model, normalizeData=False):
 	array_of_best_results.sort(key=lambda x: x[0])
 
 	return array_of_best_results
+
+
+
+
+def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test):
+	truePositives, falsePositives = list(), list()
+	pdb.set_trace()
+	trueNegatives, falseNegatives = list(), list()
+	for i, vali in enumerate(Y_pred):
+		if(vali == 1):
+			# Correct
+			if(Y_pred[i] == Y_test[i]):
+				truePositives.append(X_test[i])
+			else:
+				falsePositives.append(X_test[i])
+		elif(vali == 0):
+			if(Y_pred[i] == Y_test[i]):
+				trueNegatives.append(X_test[i])
+			else:
+				falseNegatives.append(X_test[i])
+	pdb.set_trace()
+	return truePositives, falsePositives, trueNegatives, falseNegatives
+			
+		
+
+
+
+
+

@@ -13,6 +13,10 @@ death_counts= pd.crosstab([df.Pclass, df.Sex], df.Survived.astype(bool)).apply(l
 death_counts.plot(kind='bar',stacked=True,color=['black','gold'], grid=False)
 
 death_counts.div(death_counts.sum(1).astype(float), axis = 0).plot(kind='barh', stacked=True, color=['black','gold'])
+
+# Select rows based on array value, can combine with apply
+df[df.Prefix.isin(['Capt.','Don.','Major.'])]
+
 pdb.set_trace()
 
 plt.show()
