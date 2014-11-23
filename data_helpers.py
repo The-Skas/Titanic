@@ -42,7 +42,7 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 
 	return values, _id
 
-d
+
 
 """Creates the model to predict specific column in the data."""	
 def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived'] + DROP_COL,dropColumnsTest=DROP_COL):
