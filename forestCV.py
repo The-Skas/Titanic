@@ -24,7 +24,7 @@ tuned_parameters = [{'n_estimators' : [2000], 'max_features': [2,3,4,5], 'min_sa
 					'random_state':[int(random.random() * 100),int(random.random() * 100),int(random.random() * 100)]}]
 random_num = 110
 forest = RandomForestClassifier(n_estimators = 2000, max_features=3, min_samples_split=2, random_state= random_num)
-forestcv = GridSearchCV(forest, tuned_parameters, cv=5, scoring='accuracy', n_jobs = 4, verbose=3)
+forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring='accuracy', n_jobs = 4, verbose=3)
 
 
 train_normalized= preprocessing.normalize(train_data.values)

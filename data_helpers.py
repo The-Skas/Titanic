@@ -146,6 +146,8 @@ def clean_up_some_values(df):
 	df.loc[df.Prefix.isin(['Master.','Sir.']), 'Prefix'] = 'HighMen'
 
 	df.loc[df.Prefix.isin(['Capt.', 'Col.' ,'Don.', 'Dr.' ,'Jonkheer.', 'Major.' ]), 'Prefix'] = 'WorkForce'
+	df.loc[(df.Staff == 1),'Prefix'] = 'Rev.'
+
 	le = preprocessing.LabelEncoder()
 	le.fit(df.Prefix)
 	df.Prefix = le.transform(df.Prefix)
@@ -328,9 +330,8 @@ def feature_selection_model(model, normalizeData=False):
 
 
 
-def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test):
+def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test, df):
 	truePositives, falsePositives = list(), list()
-	pdb.set_trace()
 	trueNegatives, falseNegatives = list(), list()
 	for i, vali in enumerate(Y_pred):
 		if(vali == 1):
@@ -344,8 +345,14 @@ def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test):
 				trueNegatives.append(X_test[i])
 			else:
 				falseNegatives.append(X_test[i])
-	pdb.set_trace()
-	return truePositives, falsePositives, trueNegatives, falseNegatives
+
+	return (pd.DataFrame(truePositives, columns=df.columns.values), 
+		   pd.DataFrame(falsePositives, columns=df.columns.values), 
+		   pd.DataFrame(trueNegatives, columns=df.columns.values), 
+		   pd.DataFrame(falseNegatives, columns=df.columns.values))
+
+
+
 			
 		
 
