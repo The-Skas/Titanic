@@ -41,77 +41,8 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	values = df
 
 	return values, _id
-def clean_up_some_values(df):
-	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
-	# Maps all non null values of Embarked to numbers.
-	df['Embarked']=  df[df['Embarked'].isnull() == False].Embarked.map({'C':1,'Q':2,'S':3})
-	# Gets the median
-	Embarked_median = df['Embarked'].median()
-	# Overwrites all of column 'Embarked' null values to equal the median 'Embarked'
-	# TODO: Create a model to predict 'Embarked'.
-	df['Embarked']=df['Embarked'].fillna(Embarked_median)
-
-	# Clean Cabin
-	global le_Cabin
-	df.Cabin = df.Cabin.fillna('Unknown')
-	le_Cabin = preprocessing.LabelEncoder()
-	le_Cabin.fit(df.Cabin)
-	df.Cabin = le_Cabin.transform(df.Cabin)
-
-	# Clean Ticket
-	global le_Ticket
-	df.Ticket = df.Ticket.fillna('Unknown')
-	le_Ticket = preprocessing.LabelEncoder()
-	le_Ticket.fit(df.Ticket)
-	df.Ticket = le_Ticket.transform(df.Ticket)
-
-	df.Fare=df.Fare.fillna(np.mean(df.Fare))
-
-	# Assumes anyone with Fare 0 to be staff. Staff are more likely to die.
-	df['Staff'] = 0
-	df.loc[df.Fare == 0 , 'Staff'] = 1
-
-	df.loc[df.Fare == 0, 'Fare'] = df.Fare.median()
-
-	# pdb.set_trace()
-	df['Prefix'] =  df['Name'].map( lambda x: x.split(",")[1].split(" ")[1])
-
-	# Simplify High Survival Ladies since They All Survive.
-	df.loc[df.Prefix.isin(['Mlle.', 'Mme.', 'Lady.', 'Ms.', 'the']), 'Prefix'] = 'HighWoman'
-
-	df.loc[df.Prefix.isin(['Master.','Sir.']), 'Prefix'] = 'HighMen'
-
-	df.loc[df.Prefix.isin(['Capt.', 'Col.' ,'Don.', 'Dr.' ,'Jonkheer.', 'Major.' ]), 'Prefix'] = 'WorkForce'
-	df.loc[(df.Staff == 1),'Prefix'] = 'Rev.'
-
-	le = preprocessing.LabelEncoder()
-	le.fit(df.Prefix)
-	df.Prefix = le.transform(df.Prefix)
-
-	# Create new Column Prefix-Pclass-Gender
-	print("Do Prefix-Pclass-Gender")
-	# Must initialize new row as follows
-	df['PclassGenderPref'] = 0	
-	df.PclassGenderPref = df.Gender.map(str)+ df.Pclass.map(str) +df.Prefix.map(str)
-	df.PclassGenderPref = df.PclassGenderPref.map(int)
-	print("Check.")
-def get_X_data(df, predictColumn, dropColumns=DROP_COL ):
-	# Copy df to not alter anything.
-	df_t = df.copy()
-
-	df_t = df_t[df_t[predictColumn].isnull() == True]
-
-	if('Survived' in df_t):
-		df_t=df_t.drop('Survived', axis=1)
-
-	df_t=df_t.drop(dropColumns + [predictColumn], axis=1)
-
-	data=df_t.values
-	
-
-	return data
-
+d
 
 """Creates the model to predict specific column in the data."""	
 def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived'] + DROP_COL,dropColumnsTest=DROP_COL):
@@ -164,11 +95,6 @@ def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest=
 
 	return model
 
-
-def get_array_id_from_file(file):
-	df = pd.read_csv(file, header=0)
-
-	return df['PassengerId']
 
 """
 	Outputs To file
