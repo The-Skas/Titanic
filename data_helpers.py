@@ -14,96 +14,33 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import RFECV
 from sklearn.ensemble import RandomForestRegressor
-
+from sklearn.metrics import make_scorer
+from sklearn.metrics import mean_squared_error
 # Globals
 DROP_COL = ['Name','Sex', 'PassengerId','Ticket' ,'Cabin']
 le_Cabin = 0;
 le_Ticket = 0;
-def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = ['Sex', 'Name','Cabin', 'Ticket']):
+def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
 	df = pd.read_csv(file, header=0)
 
-	clean_up_some_values(df)
-	X = get_X_data(df,'Age')
+	# Split datetime to get the hour.
+	df['time'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
 
-	gscv = RandomForestRegressor(n_estimators = 1000)
-	model = Pipeline([
-	  ('regression', gscv)
-	])
+	# Split datetime to get the day
+	df['day'] =  df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[2]))
+
+	# Split to get month
+	df['month']= df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[1]))
 	
-
-
-	model = fit_model_prediction_for_column(model)
-	y = model.predict(X)
-
-	df['AgeIsNull'] = pd.isnull(df.Age).astype(int)
-
-	df.Age[df.Age.isnull() == True] = y
-	# Creates an array of 6 values. 2 Rows, 3 columns.
-	median_ages = np.zeros((2,3))
-
-	# For each Male/Female, we will have Three different median ages
-	# depending on what their Economic class ('Pclass') is.
-	for i in range(0,2):
-		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
-			median_ages[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Age.dropna().median()
-	# AgeIsNull
-	
-	
-
-	
-
-	 # stores the median age for rows with null 'Age'
-	for i in range(0, 2):
-	    for j in range(0, 3):
-	        df.loc[(df.Age.isnull()) & (df.Gender == i) & (df.Pclass == j+1),'Age'] = median_ages[i,j]
-	df_null_Age = df[df['Age'].isnull() == True]
-
-	
-	# Convert all floats to a range of 0.5 or 1.0
-	# The reason being to fit the compo rules (Refer to data)
-	# df['Age']= df['Age'].map(lambda x: math.ceil(x * 2.0) * 0.5)
-
-	# *** DO MEAN FOR FARE ****
-	mean_fare = np.zeros((2,3))
-	for i in range(0,2):
-		for j in range(df['Pclass'].min(), df['Pclass'].max()+1):
-			mean_fare[i,j-1] = df[(df['Gender'] == i ) & (df['Pclass'] == j)].Fare.dropna().mean()
-
-
-	for i in range(0, 2):
-	    for j in range(0, 3):
-	        df.loc[(df.Fare == 0) & (df.Gender == i) & (df.Pclass == j+1),'Fare'] = mean_fare[i,j]
-	# This creates a new column ('AgeIsNull') 
-	# 
-	# pd: this is the pandas library
-	# pd.isnull(arg1): this is a function that converts the dataFrame rows
-	# 				   into a true/false table.
-
-	df['FamilySize'] = df['SibSp'] + df['Parch'] + 1
-
-	# This multiplies the Age of the person by the social 
-	# class. It adds to the fact that higher ages are even
-	# LESS likely to survive
-	
-	# Since skipi doesnt work well with strings
-	df.dtypes[df.dtypes.map(lambda x: x=='object')]
-	# Setting up for machine learning yikes! Horrible!
-	# The values you drop can improve or make worse.
-	df = df.drop(drop_columns_default + additional_columns, axis=1)
-	# Drops all columns that have any null value.. 
-	# uh? wtf? Super bad.
-	df = df.dropna()
-
-
 	# To store Id
-	passengerIds = df['PassengerId']
+	_id = df['datetime']
 
 	# Drop Id since output format issues
-	df = df.drop(['PassengerId'], axis = 1)
+	df = df.drop(['datetime'] +additional_columns , axis = 1)
 
 	values = df
 
-	return values, passengerIds
+	return values, _id
 def clean_up_some_values(df):
 	df['Gender'] = df['Sex'].map({'female': 0, 'male': 1})
 
@@ -238,12 +175,12 @@ def get_array_id_from_file(file):
 	fileName: The name of the file to output.
 	output: An array of results which are 1 or 0.
 """
-def write_model(fileName, output, passengersId):
+def write_model(fileName, output, id):
 	prediction_file = open(fileName, "wb")
 	prediction_file_object = csv.writer(prediction_file)
-	prediction_file_object.writerow(["PassengerId", "Survived"])
+	prediction_file_object.writerow(["datetime", "count"])
 	
-	for i,x in enumerate(passengersId):       # For each row in test.csv
+	for i,x in enumerate(id):       # For each row in test.csv
 	        prediction_file_object.writerow([x, output[i].astype(int)])    # predict 1
 
 	prediction_file.close()
@@ -351,11 +288,11 @@ def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test, df):
 		   pd.DataFrame(trueNegatives, columns=df.columns.values), 
 		   pd.DataFrame(falseNegatives, columns=df.columns.values))
 
+# Calculates the Root mean squared Log error
+def rmsle(Y_true, Y_pred):
+	return math.sqrt(mean_squared_error(np.log(Y_true+1), np.log(Y_pred+1)))
 
-
-			
-		
-
+rmsle_scorer = make_scorer(rmsle, greater_is_better=False)
 
 
 
