@@ -17,12 +17,11 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
 # Globals
-DROP_COL = ['Name','Sex', 'PassengerId','Ticket' ,'Cabin']
-le_Cabin = 0;
-le_Ticket = 0;
+DROP_COL = ['']
+
 def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
 	df = pd.read_csv(file, header=0)
-
+	pdb.set_trace()
 	# Split datetime to get the hour.
 	df['time'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
 
