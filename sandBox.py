@@ -5,9 +5,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pdb
 
-df, _id = clean_data_to_numbers("data/train.csv", [])
-pdb.set_trace()
+def plot_casual_registered_relation(df):
+	columns = set(df.columns.values) - set(['casual', 'registered'])
 
+	for i,column in enumerate(columns):
+		fig, ax = plt.subplots()
+		df.groupby(df[column]).registered.mean().plot(ax=ax)
+		df.groupby(df[column]).casual.mean().plot(ax=ax)
+		ax.legend()
+df, _id = clean_data_to_numbers("data/train.csv", [])
+
+plot_casual_registered_relation(df)
 # # This command will plot the Number of people who survived by sex and Pclass
 # df.groupby(['Sex', 'Pclass']).Survived.sum().plot(kind='bar')
 
@@ -21,8 +29,10 @@ pdb.set_trace()
 # df[df.Prefix.isin(['Capt.','Don.','Major.'])]
 
 
-pdb.set_trace()
+
+
 
 plt.show()
 
+pdb.set_trace()
 print "Done"

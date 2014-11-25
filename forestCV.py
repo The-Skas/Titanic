@@ -11,7 +11,7 @@ import random
 import csv as csv
 # train_test_split(train_data.values[0::,1::],train_data.values[0::,0], test_size=0.01)
 
-remove_additional_columns = []
+remove_additional_columns = ['sunday']
 remove_columns =['casual', 'registered']
 
 train_data, train_id = clean_data_to_numbers('data/train.csv',remove_columns + remove_additional_columns)
