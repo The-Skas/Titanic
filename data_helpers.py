@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 
 # Globals
 DROP_COL = ['']
-
 def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
 	df = pd.read_csv(file, header=0)
 
@@ -46,7 +45,6 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	df.loc[(df.weekday == 6), 'sunday'] = 1
 
 	df['rushhour'] = 0
-	df.loc[(df.hour == 17) | (df.hour == 18) | (df.hour == 8),'rushhour'] = 2
 	df.loc[(df.hour == 17) | (df.hour == 18) | (df.hour == 8),'rushhour'] = 1
 	# To store Id
 	_id = df['datetime']
