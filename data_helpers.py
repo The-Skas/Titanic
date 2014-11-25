@@ -17,14 +17,17 @@ from sklearn.feature_selection import RFECV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
+import matplotlib.pyplot as plt
+
 # Globals
 DROP_COL = ['']
 
 def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
 	df = pd.read_csv(file, header=0)
 
+
 	# Split datetime to get the hour.
-	df['time'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
+	df['hour'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
 
 	# Split datetime to get the day
 	df['day'] =  df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[2]))
@@ -34,15 +37,16 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	
 	# Split to get year
 	df['year'] = df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[0]))
-	
+
 	# The day of the week. (0 -> 6 (monday->Sunday))
-	pdb.set_trace()
 	df['weekday'] = df.datetime.map(lambda x: datetime.datetime(getYear(x), getMonth(x), getDay(x)).weekday())
-	pdb.set_trace()
+
 	# Is sunday? (1 = true, 0 false)
 	df['sunday'] = 0
 	df.loc[(df.weekday == 6), 'sunday'] = 1
 
+	df['rushhour'] = 0
+	df.loc[(df.time == 17) | (df.time == 18) | (df.time == 8),'rushhour'] = 1
 	# To store Id
 	_id = df['datetime']
 

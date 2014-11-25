@@ -1,10 +1,11 @@
 from data_helpers import rmsle_scorer
+from data_helpers import clean_data_to_numbers
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import pdb
 
-df = pd.read_csv("data/train.csv", header=0)
+df, _id = clean_data_to_numbers("data/train.csv", [])
 pdb.set_trace()
 
 # # This command will plot the Number of people who survived by sex and Pclass
@@ -20,14 +21,6 @@ pdb.set_trace()
 # df[df.Prefix.isin(['Capt.','Don.','Major.'])]
 
 
-# Split datetime to get the hour.
-df['time'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
-
-# Split datetime to get the day
-df['day'] =  df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[2]))
-
-# Split to get month
-df['month']= df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[1]))
 pdb.set_trace()
 
 plt.show()
