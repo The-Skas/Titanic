@@ -11,10 +11,11 @@ import random
 import csv as csv
 # train_test_split(train_data.values[0::,1::],train_data.values[0::,0], test_size=0.01)
 
+remove_additional_columns = []
 remove_columns =['casual', 'registered']
 
-train_data, train_id = clean_data_to_numbers('data/train.csv',remove_columns)
-test_data, test_id = clean_data_to_numbers('data/test.csv')
+train_data, train_id = clean_data_to_numbers('data/train.csv',remove_columns + remove_additional_columns)
+test_data, test_id = clean_data_to_numbers('data/test.csv', remove_additional_columns)
 
 index_count = np.where(train_data.columns.values == 'bcount')[0][0]
 
@@ -43,8 +44,12 @@ forest.fit(train_X, train_Y)
 model.fit(train_X, train_Y)
 
 result = model.predict(test_data.values)
+pdb.set_trace()
 
 write_model("data/CVRandomForestModel.csv", result, test_id)
+print forestcv.best_score_
+print forest.feature_importances_
+print test_data.columns.values
 pdb.set_trace()
 print "Done!"
 

@@ -4,6 +4,7 @@ import pdb
 import math
 import pylab as P
 import csv as csv
+import datetime
 from sklearn import preprocessing	
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import metrics as met
@@ -21,7 +22,7 @@ DROP_COL = ['']
 
 def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
 	df = pd.read_csv(file, header=0)
-	pdb.set_trace()
+
 	# Split datetime to get the hour.
 	df['time'] = df.datetime.map(lambda x: int(x.split(" ")[1].split(":")[0]))
 
@@ -29,8 +30,19 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	df['day'] =  df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[2]))
 
 	# Split to get month
-	df['month']= df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[1]))
+	df['month'] = df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[1]))
 	
+	# Split to get year
+	df['year'] = df.datetime.map(lambda x: int(x.split(" ")[0].split('-')[0]))
+	
+	# The day of the week. (0 -> 6 (monday->Sunday))
+	pdb.set_trace()
+	df['weekday'] = df.datetime.map(lambda x: datetime.datetime(getYear(x), getMonth(x), getDay(x)).weekday())
+	pdb.set_trace()
+	# Is sunday? (1 = true, 0 false)
+	df['sunday'] = 0
+	df.loc[(df.weekday == 6), 'sunday'] = 1
+
 	# To store Id
 	_id = df['datetime']
 
@@ -41,7 +53,14 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 
 	return values, _id
 
-
+def parseDate(str, index):
+	return int(str.split(" ")[0].split('-')[index])
+def getDay(str):
+	return parseDate(str, 2)
+def getMonth(str):
+	return parseDate(str, 1)
+def getYear(str):
+	return parseDate(str, 0)
 
 """Creates the model to predict specific column in the data."""	
 def fit_model_prediction_for_column(model, fileTrain='data/train.csv', fileTest='data/test.csv', Predictcolumn='Age', dropColumnsTrain=['Survived'] + DROP_COL,dropColumnsTest=DROP_COL):
