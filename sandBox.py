@@ -10,11 +10,13 @@ def plot_casual_registered_relation(df):
 
 	for i,column in enumerate(columns):
 		fig, ax = plt.subplots()
-		df.groupby(df[column]).registered.mean().plot(ax=ax)
-		df.groupby(df[column]).casual.mean().plot(ax=ax)
+		df.groupby(df[column]).registered.mean().plot(kind='bar',ax=ax)
+		df.groupby(df[column]).casual.mean().plot(kind='bar',ax=ax, color=['r'])
 		ax.legend()
 df, _id = clean_data_to_numbers("data/train.csv", [])
 
+df_tr, _id = clean_data_to_numbers("data/test.csv", [])
+pdb.set_trace()
 plot_casual_registered_relation(df)
 # # This command will plot the Number of people who survived by sex and Pclass
 # df.groupby(['Sex', 'Pclass']).Survived.sum().plot(kind='bar')

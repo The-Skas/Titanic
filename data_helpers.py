@@ -17,6 +17,12 @@ from sklearn.feature_selection import RFECV
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
+from sklearn.grid_search  import GridSearchCV
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+import random
+import csv as csv
 import matplotlib.pyplot as plt
 
 # Globals
@@ -40,10 +46,11 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# The day of the week. (0 -> 6 (monday->Sunday))
 	df['weekday'] = df.datetime.map(lambda x: datetime.datetime(getYear(x), getMonth(x), getDay(x)).weekday())
 
-	# Is sunday? (1 = true, 0 false)
-	df['sunday'] = 0
-	df.loc[(df.weekday == 6), 'sunday'] = 1
+	# Due to more people registering per a year, combine month*year
+	df['month*year'] = df['year'].map(str) + df['month'].map(str)
+	df['month*year'] = df['month*year'].map(int)
 
+	# Set rush-hour times. (When people go to work, leave work)
 	df['rushhour'] = 0
 	df.loc[(df.hour == 17) | (df.hour == 18) | (df.hour == 8),'rushhour'] = 1
 	# To store Id
@@ -56,6 +63,23 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 
 	return values, _id
 
+def clean_data_to_numbers_registered(file,additional_columns = [], normalize = False, drop_columns_default = []):
+	df, _id = clean_data_to_numbers(file, additional_columns)
+
+	# Set weather to 1 if 3. These values differ for registered vs casuals
+	df['badweather'] = 0
+	df.loc[(df.weather == 3), 'badweather'] = 1
+
+	return df, _id
+
+
+def clean_data_to_numbers_casual(file,additional_columns = [], normalize = False, drop_columns_default = []):
+	df, _id = clean_data_to_numbers(file, additional_columns)
+
+	df['badweather'] = 0
+	df.loc[(df.weather == 3) | (df.weather == 4) , 'badweather'] = 1
+	
+	return df, _id
 def parseDate(str, index):
 	return int(str.split(" ")[0].split('-')[index])
 def getDay(str):
@@ -156,16 +180,13 @@ def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False
 	
 	return model.score(X_test, Y_test)
 
-def feature_selection_model(model, normalizeData=False):
-	list_of_columns =  ['Pclass', 'Age', 'SibSp', 'Parch', 'Fare', 'Embarked', 'Gender', 'AgeIsNull', 'FamilySize', 'Staff', 'Prefix']
-
-	mutable_list = list(list_of_columns)
+def feature_selection_model(col_pred, cols_remove):
 
 	final_removeable_columns = list()
 	# Backward Feature Selection
-	best_accuracy = evaluate_accuracy_of_removed_columns(model,[],normalizeData)
+	result,_id,best_accuracy,df = calculateForestModel(col_pred=col_pred, cols_remove=cols_remove,casual=False)
 
-
+	list_of_columns =  df.columns.values
 	array_of_best_results = list()
 
 	amount_redundant_loop = 0
@@ -181,7 +202,7 @@ def feature_selection_model(model, normalizeData=False):
 			# After each x+1, mutable list will have a column removed from it.
 			
 			temp_removeable_columns.append(mutable_list[j])
-			temp_accuracy = evaluate_accuracy_of_removed_columns(model,temp_removeable_columns,normalizeData)
+			result, _id, temp_accuracy, df = calculateForestModel(col_pred=col_pred, cols_remove=cols_remove,additional_cols_remove=temp_removeable_columns)
 
 			# if The accuracy improved after removing the given columns
 			if(temp_accuracy > best_accuracy):
@@ -209,7 +230,8 @@ def feature_selection_model(model, normalizeData=False):
 	
 	array_of_best_results.sort(key=lambda x: x[0])
 
-	return array_of_best_results
+	# Reverse array output to match less, is better
+	return array_of_best_results[::-1]
 
 
 
@@ -235,6 +257,68 @@ def getDataFrameConfusionMatrix(Y_pred, Y_test, X_test, df):
 		   pd.DataFrame(trueNegatives, columns=df.columns.values), 
 		   pd.DataFrame(falseNegatives, columns=df.columns.values))
 
+""" 
+	'calculateForestModel(col_pred, cols_remove, additional_cols_remove, casual)'
+
+	Created a method for calculating a random forest and returning its predicted result.
+	The reason is to create seperate models for different columns. In this case, 
+			
+			Since 'count' = 'casual' + 'registered'
+	
+	We create one model to predict 'casual', and another to predict 'registered'.
+	We then combine the scores of casual + registered to give us count.
+
+	returns: result, id
+
+"""
+
+def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_remove=[]):
+
+	remove_columns =['bcount'] + cols_remove
+
+	train_data, train_id = 0 , 0
+	test_data, test_id = 0, 0
+
+	if(col_pred == 'casual'):
+		train_data, train_id = clean_data_to_numbers_casual('data/train.csv',remove_columns)
+		test_data, test_id = clean_data_to_numbers_casual('data/test.csv', additional_cols_remove)
+	else:
+		train_data, train_id = clean_data_to_numbers_registered('data/train.csv',remove_columns)
+		test_data, test_id = clean_data_to_numbers_registered('data/test.csv', additional_cols_remove)
+			
+		
+
+	index_count = np.where(train_data.columns.values == col_pred)[0][0]
+
+	"""
+	*** Create the random forest object which will include all the parameters for the fit
+	"""
+
+	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[4]}]
+
+	forest = RandomForestRegressor(n_estimators = 500, max_features='auto', n_jobs=2)
+
+	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
+
+	model = Pipeline([
+		('regression', forestcv),
+		])
+	# Remove the 'bcount' columns for the X value
+	train_X = np.delete(train_data.values, np.s_[index_count], 1)
+
+	# Use the 'bcount' columns only for the Y value
+	train_Y = train_data.values[0::, index_count]
+
+	# forest.fit is just for debugging
+	forest.fit(train_X, train_Y)
+
+	model.fit(train_X, train_Y)
+
+	result = model.predict(test_data.values)
+	
+	print forestcv.best_score_
+	print test_data.columns.values + forest.feature_importances_.astype(np.str)
+	return result, test_id, forestcv.best_score_, test_data
 # Calculates the Root mean squared Log error
 def rmsle(Y_true, Y_pred):
 	return math.sqrt(mean_squared_error(np.log(Y_true+1), np.log(Y_pred+1)))
