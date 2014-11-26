@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 # Globals
 DROP_COL = ['']
-def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = []):
+def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_columns_default = [], doDropColumns=True):
 	df = pd.read_csv(file, header=0)
 
 
@@ -47,8 +47,8 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	df['weekday'] = df.datetime.map(lambda x: datetime.datetime(getYear(x), getMonth(x), getDay(x)).weekday())
 
 	# Due to more people registering per a year, combine month*year
-	df['month*year'] = df['year'].map(str) + df['month'].map(str)
-	df['month*year'] = df['month*year'].map(int)
+	# df['month*year'] = df['year'].map(str) + df['month'].map(str)
+	# df['month*year'] = df['month*year'].map(int)
 
 	# Set rush-hour times. (When people go to work, leave work)
 	df['rushhour'] = 0
@@ -57,28 +57,33 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	_id = df['datetime']
 
 	# Drop Id since output format issues
-	df = df.drop(['datetime'] +additional_columns , axis = 1)
+	if(doDropColumns):
+		df = df.drop(['datetime'] +additional_columns , axis = 1)
 
 	values = df
 
 	return values, _id
 
 def clean_data_to_numbers_registered(file,additional_columns = [], normalize = False, drop_columns_default = []):
-	df, _id = clean_data_to_numbers(file, additional_columns)
+	df, _id = clean_data_to_numbers(file, additional_columns, doDropColumns=False)
 
 	# Set weather to 1 if 3. These values differ for registered vs casuals
-	df['badweather'] = 0
-	df.loc[(df.weather == 3), 'badweather'] = 1
+	# df['badweather'] = 0
+	# df.loc[(df.weather == 3), 'badweather'] = 1
+
+	df = df.drop(['datetime'] +additional_columns , axis = 1)
 
 	return df, _id
 
 
 def clean_data_to_numbers_casual(file,additional_columns = [], normalize = False, drop_columns_default = []):
-	df, _id = clean_data_to_numbers(file, additional_columns)
+	df, _id = clean_data_to_numbers(file, additional_columns,doDropColumns=False)
 
-	df['badweather'] = 0
-	df.loc[(df.weather == 3) | (df.weather == 4) , 'badweather'] = 1
+	# df['badweather'] = 0
+	# df.loc[(df.weather == 3) | (df.weather == 4) , 'badweather'] = 1
 	
+	df = df.drop(['datetime'] +additional_columns , axis = 1)
+
 	return df, _id
 def parseDate(str, index):
 	return int(str.split(" ")[0].split('-')[index])
@@ -185,7 +190,7 @@ def feature_selection_model(col_pred, cols_remove):
 	# Backward Feature Selection
 	result,_id,best_accuracy,df = calculateForestModel(col_pred=col_pred, cols_remove=cols_remove,casual=False)
 	
-	final_removeable_columns = df.columns.values
+	final_removeable_columns = list()
 	
 	mutable_list =  list(final_removeable_columns)
 	
@@ -282,10 +287,10 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	test_data, test_id = 0, 0
 
 	if(col_pred == 'casual'):
-		train_data, train_id = clean_data_to_numbers_casual('data/train.csv',remove_columns)
+		train_data, train_id = clean_data_to_numbers_casual('data/train.csv',remove_columns + additional_cols_remove)
 		test_data, test_id = clean_data_to_numbers_casual('data/test.csv', additional_cols_remove)
 	else:
-		train_data, train_id = clean_data_to_numbers_registered('data/train.csv',remove_columns)
+		train_data, train_id = clean_data_to_numbers_registered('data/train.csv',remove_columns + additional_cols_remove)
 		test_data, test_id = clean_data_to_numbers_registered('data/test.csv', additional_cols_remove)
 			
 		
@@ -296,15 +301,13 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	*** Create the random forest object which will include all the parameters for the fit
 	"""
 
-	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[2]}]
+	tuned_parameters = [{'n_estimators' : [1], 'max_features': ['auto'],'n_jobs':[1]}]
 
-	forest = RandomForestRegressor(n_estimators = 500, max_features='auto', n_jobs=2)
+	forest = RandomForestRegressor(n_estimators = 1, max_features='auto', n_jobs=1)
 
-	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
+	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 1, verbose=3)
 
-	model = Pipeline([
-		('regression', forestcv),
-		])
+	model = forestcv
 	# Remove the 'bcount' columns for the X value
 	train_X = np.delete(train_data.values, np.s_[index_count], 1)
 
@@ -315,7 +318,7 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	forest.fit(train_X, train_Y)
 
 	model.fit(train_X, train_Y)
-
+	pdb.set_trace()
 	result = model.predict(test_data.values)
 	
 	print forestcv.best_score_

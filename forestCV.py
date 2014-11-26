@@ -23,9 +23,9 @@ index_count = np.where(train_data.columns.values == 'bcount')[0][0]
 *** Create the random forest object which will include all the parameters for the fit
 """
 
-tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'], 'n_jobs': [4]}]
+tuned_parameters = [{'n_estimators' : [200], 'max_features': ['auto'], 'n_jobs': 	[4]}]
 
-forest = RandomForestRegressor(n_estimators = 500, max_features='auto', n_jobs = 4)
+forest = RandomForestRegressor(n_estimators = 200, max_features='auto', n_jobs = 4)
 
 forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 4, verbose=0)
 
