@@ -187,17 +187,21 @@ def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False
 
 def feature_selection_model(col_pred, cols_remove):
 
+	
+	
 	# Backward Feature Selection
 	result,_id,best_accuracy,df = calculateForestModel(col_pred=col_pred, cols_remove=cols_remove,casual=False)
 	
+	list_of_columns =  df.columns.values
+
 	final_removeable_columns = list()
 	
-	mutable_list =  list(final_removeable_columns)
+	mutable_list =  list(list_of_columns)
 	
 	array_of_best_results = list()
 
 	amount_redundant_loop = 0
-	for i, x in enumerate(final_removeable_columns):
+	for i, x in enumerate(list_of_columns):
 		print(i)
 		print(x),
 		best_column_i = -1
@@ -301,11 +305,11 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	*** Create the random forest object which will include all the parameters for the fit
 	"""
 
-	tuned_parameters = [{'n_estimators' : [1], 'max_features': ['auto'],'n_jobs':[1]}]
+	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[2]}]
 
-	forest = RandomForestRegressor(n_estimators = 1, max_features='auto', n_jobs=1)
+	forest = RandomForestRegressor(n_estimators = 10, max_features='auto', n_jobs=2)
 
-	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 1, verbose=3)
+	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
 
 	model = forestcv
 	# Remove the 'bcount' columns for the X value
@@ -318,7 +322,6 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	forest.fit(train_X, train_Y)
 
 	model.fit(train_X, train_Y)
-	pdb.set_trace()
 	result = model.predict(test_data.values)
 	
 	print forestcv.best_score_
