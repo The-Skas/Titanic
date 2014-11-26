@@ -182,15 +182,17 @@ def evaluate_accuracy_of_removed_columns(model,columns=[], normalizeData = False
 
 def feature_selection_model(col_pred, cols_remove):
 
-	final_removeable_columns = list()
 	# Backward Feature Selection
 	result,_id,best_accuracy,df = calculateForestModel(col_pred=col_pred, cols_remove=cols_remove,casual=False)
-
-	list_of_columns =  df.columns.values
+	
+	final_removeable_columns = df.columns.values
+	
+	mutable_list =  list(final_removeable_columns)
+	
 	array_of_best_results = list()
 
 	amount_redundant_loop = 0
-	for i, x in enumerate(list_of_columns):
+	for i, x in enumerate(final_removeable_columns):
 		print(i)
 		print(x),
 		best_column_i = -1
@@ -294,7 +296,7 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	*** Create the random forest object which will include all the parameters for the fit
 	"""
 
-	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[4]}]
+	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[2]}]
 
 	forest = RandomForestRegressor(n_estimators = 500, max_features='auto', n_jobs=2)
 
