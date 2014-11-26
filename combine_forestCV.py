@@ -19,6 +19,8 @@ import csv as csv
 	We create one model to predict 'casual', and another to predict 'registered'.
 	We then combine the scores of casual + registered to give us count.
 
+	returns: result, id
+
 """
 def calculateForestModel(col_pred, cols_remove):
 
@@ -55,11 +57,14 @@ def calculateForestModel(col_pred, cols_remove):
 
 	result = model.predict(test_data.values)
 	
+	print forestcv.best_score_
+	print test_data.columns.values + forest.feature_importances_.astype(np.str)
+	pdb.set_trace()
 	return result, test_id
 
-arrCasualCount, _id= calculateForestModel('casual', ['registered'])
+arrCasualCount, _id= calculateForestModel(col_pred='casual', cols_remove=['registered'])
 
-arrRegisteredCount, _id = calculateForestModel('registered', ['casual'])
+arrRegisteredCount, _id = calculateForestModel(col_pred='registered', cols_remove=['casual'])
 
 arrResult = arrRegisteredCount + arrCasualCount
 

@@ -11,13 +11,13 @@ import random
 import csv as csv
 # train_test_split(train_data.values[0::,1::],train_data.values[0::,0], test_size=0.01)
 
-remove_additional_columns = ['sunday']
-remove_columns =['casual', 'registered']
+remove_additional_columns = []
+remove_columns =[]
 
-train_data, train_id = clean_data_to_numbers('data/train.csv',remove_columns + remove_additional_columns)
-test_data, test_id = clean_data_to_numbers('data/test.csv', remove_additional_columns)
+train_data, train_id = clean_data_to_numbers('data/train2000.csv',remove_columns + remove_additional_columns)
+test_data, test_id = clean_data_to_numbers('data/test2000.csv', remove_additional_columns)
 
-index_count = np.where(train_data.columns.values == 'bcount')[0][0]
+index_count = np.where(train_data.columns.values == 'count')[0][0]
 
 """
 *** Create the random forest object which will include all the parameters for the fit
@@ -43,6 +43,7 @@ forest.fit(train_X, train_Y)
 
 model.fit(train_X, train_Y)
 
+pdb.set_trace()
 result = model.predict(test_data.values)
 pdb.set_trace()
 
