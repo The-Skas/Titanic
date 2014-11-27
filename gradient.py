@@ -28,7 +28,7 @@ features = ['datetime', 'season', 'holiday', 'workingday', 'weather',
             'temp','atemp', 'humidity', 'windspeed','rushhour']
 m = graphlab.boosted_trees.create(training_sframe,
                             features=features,
-                            target='count', objective='regression',
+                            target='bcount', objective='regression',
                             num_iterations=20)
 
 # predict on test data
