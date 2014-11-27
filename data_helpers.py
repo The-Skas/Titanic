@@ -159,7 +159,7 @@ def write_model(fileName, output, id):
 	prediction_file_object.writerow(["datetime", "count"])
 	
 	for i,x in enumerate(id):       # For each row in test.csv
-	        prediction_file_object.writerow([x, output[i].astype(float)])    # predict 1
+	        prediction_file_object.writerow([x, int(round(output[i]))])    # predict 1
 
 	prediction_file.close()
 
