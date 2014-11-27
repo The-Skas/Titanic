@@ -1,4 +1,7 @@
 
+#sudo pip install graphlab-create==0.9.1
+
+
 
 import math
 
