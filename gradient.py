@@ -22,17 +22,17 @@ from datetime import datetime
 import graphlab as graphlab
 
 # load training data
-training_sframe = graphlab.SFrame.read_csv('data/train.csv')
+training_sframe = graphlab.SFrame.read_csv('data/mod_train.csv')
 # train a model
 features = ['datetime', 'season', 'holiday', 'workingday', 'weather',
-            'temp','atemp', 'humidity', 'windspeed']
+            'temp','atemp', 'humidity', 'windspeed','rushhour']
 m = graphlab.boosted_trees.create(training_sframe,
                             features=features,
                             target='bcount', objective='regression',
                             num_iterations=20)
 
 # predict on test data
-test_sframe = graphlab.SFrame.read_csv('data/test.csv')
+test_sframe = graphlab.SFrame.read_csv('data/mod_test.csv')
 prediction = m.predict(test_sframe)
 
 
