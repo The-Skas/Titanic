@@ -6,9 +6,9 @@ from data_helpers import *
 
 
 
-arrCasualCount, _id, casual_score, df = calculateForestModel(col_pred='casual', cols_remove=['registered'], casual=True, additional_cols_remove=['day', 'windspeed', 'workingday', 'rushhour'])
+arrCasualCount, _id, casual_score, df = calculateGradientModel(col_pred='casual', cols_remove=['registered'], casual=True, additional_cols_remove=['day', 'windspeed', 'workingday', 'rushhour'])
 
-arrRegisteredCount, _id, registered_score, df  = calculateForestModel(col_pred='registered', cols_remove=['casual'], casual=False, additional_cols_remove=['windspeed', 'season', 'day', 'atemp', 'rushhour', 'workingday'])
+arrRegisteredCount, _id, registered_score, df  = calculateGradientModel(col_pred='registered', cols_remove=['casual'], casual=False, additional_cols_remove=['windspeed', 'season', 'day', 'atemp', 'rushhour', 'workingday'])
 
 arrResult = arrRegisteredCount + arrCasualCount
 

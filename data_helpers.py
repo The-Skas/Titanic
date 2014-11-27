@@ -14,7 +14,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import RFECV
+from sklearn import ensemble
 from sklearn.ensemble import RandomForestRegressor
+
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
 from sklearn.grid_search  import GridSearchCV
@@ -157,7 +159,7 @@ def write_model(fileName, output, id):
 	prediction_file_object.writerow(["datetime", "count"])
 	
 	for i,x in enumerate(id):       # For each row in test.csv
-	        prediction_file_object.writerow([x, output[i].astype(int)])    # predict 1
+	        prediction_file_object.writerow([x, output[i].astype(float)])    # predict 1
 
 	prediction_file.close()
 
@@ -324,6 +326,57 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 	model.fit(train_X, train_Y)
 	result = model.predict(test_data.values)
 	
+	print forestcv.best_score_
+	print test_data.columns.values + forest.feature_importances_.astype(np.str)
+	return result, test_id, forestcv.best_score_, test_data
+
+
+def calculateGradientModel(col_pred, cols_remove, casual=True, additional_cols_remove=[]):
+
+	remove_columns =['bcount'] + cols_remove
+
+	train_data, train_id = 0 , 0
+	test_data, test_id = 0, 0
+
+	if(col_pred == 'casual'):
+		train_data, train_id = clean_data_to_numbers_casual('data/train.csv',remove_columns + additional_cols_remove)
+		test_data, test_id = clean_data_to_numbers_casual('data/test.csv', additional_cols_remove)
+	else:
+		train_data, train_id = clean_data_to_numbers_registered('data/train.csv',remove_columns + additional_cols_remove)
+		test_data, test_id = clean_data_to_numbers_registered('data/test.csv', additional_cols_remove)
+			
+		
+
+	index_count = np.where(train_data.columns.values == col_pred)[0][0]
+
+	"""
+	*** Create the random forest object which will include all the parameters for the fit
+	"""
+
+	tuned_parameters = [{'n_estimators': [500], 'max_depth': [4], 'min_samples_split': [1],'learning_rate': [0.01], 'loss': ['ls']}]
+
+	forest = ensemble.GradientBoostingRegressor(**{'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 1,'learning_rate': 0.01, 'loss': 'ls'})
+	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
+
+	model = forestcv
+
+	train_normalized = preprocessing.normalize(train_data.values)
+
+	# Remove the 'bcount' columns for the X value
+	train_X = np.delete(train_normalized, np.s_[index_count], 1)
+
+	# Use the 'bcount' columns only for the Y value
+	train_Y = train_normalized[0::, index_count]
+
+	
+	
+	pdb.set_trace()
+	# forest.fit is just for debugging
+	forest.fit(train_X, train_Y)
+
+	model.fit(train_X, train_Y)
+	result = model.predict(test_data.values)
+	pdb.set_trace()
 	print forestcv.best_score_
 	print test_data.columns.values + forest.feature_importances_.astype(np.str)
 	return result, test_id, forestcv.best_score_, test_data
