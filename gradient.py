@@ -15,7 +15,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 import random
 import csv as csv
-
+import pdb as pdb
 from datetime import datetime
 
 # load training data
@@ -23,7 +23,6 @@ import graphlab as graphlab
 
 # load training data
 training_sframe = graphlab.SFrame.read_csv('data/train.csv')
-
 # train a model
 features = ['datetime', 'season', 'holiday', 'workingday', 'weather',
             'temp','atemp', 'humidity', 'windspeed']
@@ -67,6 +66,17 @@ def process_date_column(data_sframe):
 process_date_column(training_sframe)
 process_date_column(test_sframe)
 
+def parse_rush_hour(sframe):
+  sframe['rushhour'] = 0
+  for i in enumerate(sframe):
+    if (i['hour'] in [8,17,18]):
+      x['rushhour'] = 1
+     
+
+parse_rush_hour(training_sframe)
+parse_rush_hour(test_sframe)
+
+pdb.set_trace()
 
 
 

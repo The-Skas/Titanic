@@ -51,10 +51,11 @@ def clean_data_to_numbers(file,additional_columns = [], normalize = False, drop_
 	# Due to more people registering per a year, combine month*year
 	# df['month*year'] = df['year'].map(str) + df['month'].map(str)
 	# df['month*year'] = df['month*year'].map(int)
-
+	pdb.set_trace()
 	# Set rush-hour times. (When people go to work, leave work)
 	df['rushhour'] = 0
 	df.loc[(df.hour == 17) | (df.hour == 18) | (df.hour == 8),'rushhour'] = 1
+	pdb.set_trace()
 	# To store Id
 	_id = df['datetime']
 
