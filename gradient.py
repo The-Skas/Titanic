@@ -28,7 +28,7 @@ features = ['datetime', 'season', 'holiday', 'workingday', 'weather',
             'temp','atemp', 'humidity', 'windspeed','rushhour']
 m = graphlab.boosted_trees.create(training_sframe,
                             features=features,
-                            target='bcount', objective='regression',
+                            target='count', objective='regression',
                             num_iterations=20)
 
 # predict on test data
@@ -66,17 +66,7 @@ def process_date_column(data_sframe):
 process_date_column(training_sframe)
 process_date_column(test_sframe)
 
-def parse_rush_hour(sframe):
-  sframe['rushhour'] = 0
-  for i in enumerate(sframe):
-    if (i['hour'] in [8,17,18]):
-      x['rushhour'] = 1
-     
 
-parse_rush_hour(training_sframe)
-parse_rush_hour(test_sframe)
-
-pdb.set_trace()
 
 
 
