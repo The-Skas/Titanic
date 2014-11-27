@@ -158,8 +158,14 @@ def write_model(fileName, output, id):
 	prediction_file_object = csv.writer(prediction_file)
 	prediction_file_object.writerow(["datetime", "count"])
 	
-	for i,x in enumerate(id):       # For each row in test.csv
-	        prediction_file_object.writerow([x, int(round(output[i]))])    # predict 1
+	for i,x in enumerate(id):
+		result = int(round(output[i]))
+		if(result < 0):
+			result = 0
+		
+
+		prediction_file_object.writerow([x,result])
+
 
 	prediction_file.close()
 
@@ -358,28 +364,42 @@ def calculateGradientModel(col_pred, cols_remove, casual=True, additional_cols_r
 	forest = ensemble.GradientBoostingRegressor(**{'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 1,'learning_rate': 0.01, 'loss': 'ls'})
 	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
 
-	model = forestcv
+	model = forest
 
-	train_normalized = preprocessing.normalize(train_data.values)
 
 	# Remove the 'bcount' columns for the X value
-	train_X = np.delete(train_normalized, np.s_[index_count], 1)
+	train_X = np.delete(train_data.values, np.s_[index_count], 1)
 
 	# Use the 'bcount' columns only for the Y value
-	train_Y = train_normalized[0::, index_count]
+	train_Y = train_data.values[0::, index_count]
 
-	
-	
-	pdb.set_trace()
+	scale_X = preprocessing.StandardScaler()
+
+	df_train_X = pd.DataFrame(train_X,columns=test_data.columns.values)
+	all_data = pd.concat([df_train_X, test_data], ignore_index=True)
+
+	scale_X.fit(all_data.values)
+	norm_X = scale_X.transform(train_X)
+
+	scale_Y = preprocessing.StandardScaler()
+	scale_Y.fit(train_Y)
+	norm_Y = scale_Y.transform(train_Y)
+
 	# forest.fit is just for debugging
 	forest.fit(train_X, train_Y)
 
-	model.fit(train_X, train_Y)
-	result = model.predict(test_data.values)
+	
+	test_norm_X =scale_X.transform(test_data.values)
+
+	# result = model.predict(test_norm_X)
+
+	# result = scale_Y.inverse_transform(result)
+	result = forest.predict(test_data.values)
+
 	pdb.set_trace()
-	print forestcv.best_score_
+	# print forestcv.best_score_
 	print test_data.columns.values + forest.feature_importances_.astype(np.str)
-	return result, test_id, forestcv.best_score_, test_data
+	return result, test_id, 0.9, test_data
 # Calculates the Root mean squared Log error
 def rmsle(Y_true, Y_pred):
 	return math.sqrt(mean_squared_error(np.log(Y_true+1), np.log(Y_pred+1)))
