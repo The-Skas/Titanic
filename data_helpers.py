@@ -307,7 +307,7 @@ def calculateForestModel(col_pred, cols_remove, casual=True, additional_cols_rem
 
 	tuned_parameters = [{'n_estimators' : [500], 'max_features': ['auto'],'n_jobs':[2]}]
 
-	forest = RandomForestRegressor(n_estimators = 10, max_features='auto', n_jobs=2)
+	forest = RandomForestRegressor(n_estimators = 500, max_features='auto', n_jobs=2)
 
 	forestcv = GridSearchCV(forest, tuned_parameters, cv=10, scoring=rmsle_scorer, n_jobs = 2, verbose=3)
 
